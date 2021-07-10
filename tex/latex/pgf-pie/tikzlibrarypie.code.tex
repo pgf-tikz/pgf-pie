@@ -205,6 +205,10 @@
 }
 
 \def\pgfpie@@pie[#1]#2{%
+  \begingroup
+  % to be compatible with "babel" lib
+  \tikzset{handle active characters in nodes=false}
+
   % load default parameters
   \pgfqkeys{/pgfpie}{
     explode=0,
@@ -280,6 +284,7 @@
     \pgfpie@iflegend{%
       \pgfpie@legend{#2}%
   }{}}%
+  \endgroup
 }
 
 \def\pgfpie@pie@square#1{%
