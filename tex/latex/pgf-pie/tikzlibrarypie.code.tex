@@ -96,10 +96,24 @@
   }%
 }
 
-\def\pgfpie@findColor#1{%
-  \pgfmathparse{int(mod(#1,\the\pgfpie@colorLength))}%
+\def\pgfpie@findColor#1#2{%
+  \pgfmathparse{int(mod(#2,\the\pgfpie@colorLength))}%
   \let\pgfpie@ci\pgfmathresult
-  \foreach \pgfpie@c [count=\pgfpie@j from 0] in \pgfpie@color {%
+  
+  \pgfpie@ifodd{#1}{%
+    \let\pgfpie@colorlist\empty
+    \foreach\x in \pgfpie@color {%
+      \pgfpie@ifx\pgfpie@colorlist\pgfutil@empty{%
+        \xdef\pgfpie@colorlist{\x}%
+      }{%
+        \xdef\pgfpie@colorlist{\x,\pgfpie@colorlist}%
+      }%
+    }%
+  }{%
+    \xdef\pgfpie@colorlist{\pgfpie@color}%
+  }%
+  
+  \foreach \pgfpie@c [count=\pgfpie@j from 0] in \pgfpie@colorlist {%
     \pgfpie@ifnum{\pgfpie@j}{=}{\pgfpie@ci}{%
       \xdef\pgfpie@thecolor{\pgfpie@c}%
       \breakforeach
@@ -171,6 +185,9 @@
 
 \pgfpie@newif{legend}
 
+\pgfpie@newif{changedirection}
+\pgfqkeys{/pgfpie}{change direction/.is if=pgfpie@changedirection}
+
 \pgfpie@newif{square}
 \pgfqkeys{/pgfpie}{square/.is if=pgfpie@square}
 
@@ -219,6 +236,7 @@
     text=label,
     sum=100,
     rotate=0,
+    change direction=false,
     polar=false,
     square=false,
     cloud=false,
@@ -293,7 +311,7 @@
   % drawing loop
   \foreach \pgfpie@p/\pgfpie@t [count=\pgfpie@i from 0] in {#1}
   {
-    \pgfpie@findColor{\pgfpie@i}
+    \pgfpie@findColor{0}{\pgfpie@i}
 
     \pgfpie@ifdim{\pgfpie@verticalLength cm}{>}{\pgfpie@horizontalLength cm}{%
       \pgfmathparse{(\pgfpie@p) * (\pgfpie@squareUnit) / (\pgfpie@horizontalLength)}
@@ -384,7 +402,7 @@
     }}%
 
     % find color
-    \pgfpie@findColor{\pgfpie@i}
+    \pgfpie@findColor{0}{\pgfpie@i}
 
     \pgfpie@cloud{pgfpie@O}{\pgfpie@cloudR}{\pgfpie@p}
     {\pgfpie@thecolor}{\pgfpie@style}{\pgfpie@t}
@@ -420,7 +438,20 @@
 
   \xdef\pgfpie@angleBegin{\the\pgfpie@angleEnd}
   % drawing loop
-  \foreach \pgfpie@p/\pgfpie@t [count=\pgfpie@i from 0] in {#1}
+  
+  \pgfpie@ifchangedirection{%
+    \let\pgfpie@rlist\empty
+    \foreach\x in {#1} {
+      \pgfpie@ifx\pgfpie@rlist\pgfutil@empty{%
+        \xdef\pgfpie@rlist{\x}%
+      }{%
+        \xdef\pgfpie@rlist{\x,\pgfpie@rlist}%
+      }%
+    }%
+  }%
+  {\xdef\pgfpie@rlist{#1}}%
+  
+  \foreach \pgfpie@p/\pgfpie@t [count=\pgfpie@i from 0] in \pgfpie@rlist %{#1}
   {
     \pgfmathsetlength{\pgfpie@angleEnd}{\pgfpie@angleBegin}
     \pgfpie@ifpolar{%
@@ -437,7 +468,7 @@
     \pgfpie@findExplode{\pgfpie@i}
 
     % find color
-    \pgfpie@findColor{\pgfpie@i}
+    \pgfpie@ifchangedirection{\pgfpie@findColor{1}{\pgfpie@i}}{\pgfpie@findColor{0}{\pgfpie@i}}    
     \pgfpie@slice{(\pgfpie@angleBegin)/(\pgfpie@sum)*360+(\pgfpie@rotate)}
     {\the\pgfpie@angleEnd/(\pgfpie@sum)*360+(\pgfpie@rotate)}
     {\pgfpie@p}
@@ -458,7 +489,7 @@
   \scope[node distance=0.5cm]
     \foreach \pgfpie@p/\pgfpie@t [count=\pgfpie@i from 0] in {#1}
     {
-      \pgfpie@findColor{\pgfpie@i}
+      \pgfpie@findColor{0}{\pgfpie@i}
       \node[draw, fill={\pgfpie@thecolor}, \pgfpie@style, below of={pgfpie@legendpos}, label={0:{\pgfpie@t}}] (pgfpie@legendpos) {};
     }
   \endscope
